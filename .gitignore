@@ -11,6 +11,11 @@ Data/
 .venv/
 .DS_Store
 
+.venv/
+env/
+venv/
+anaconda-project/
+.condarc
 
 # Distribution / packaging
 .Python
