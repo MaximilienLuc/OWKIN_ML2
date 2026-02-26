@@ -42,6 +42,7 @@ Status: 🔴 Failed (below Random Forest Optimized baseline)
 | **3a** | **Conservative RF — Mean only (2048d)** | **0.6713** | **TBD** | 🟡 Pending |
 | **3b** | **Conservative RF — Ext Filtered (18382d)** | **0.6865** | **TBD** | 🟡 Pending |
 | **3c** | **Conservative RF — Ext Full (18432d)** | **0.6878** | **TBD** | 🟡 Pending |
+| **4** | **Domain-Agnostic RF (GroupKFold + Adv Val)** | **0.6862** | **0.6241** | 🔴 Failed |
 
 ### Iteration 2 — Ensemble Breakdown
 
@@ -70,6 +71,12 @@ Status: 🔴 Failed (below Random Forest Optimized baseline)
 - **Meta-learner coefficients** [0.997, 1.748] confirm Ridge gets more weight — consistent with its higher individual OOF AUC (0.6932 > 0.6774).
 - **Optimal blend α=0.55** is close to 50/50, suggesting both models contribute meaningfully.
 - **OOF AUC 0.6975 is promising** but may not fully translate to leaderboard score. The key test is the actual submission.
+
+### Iteration 4 — Domain-Agnostic Pipeline
+- **Covariate Shift is critical**: The dataset is split across 5 hospitals. Train is `C_1, C_2, C_5` and Test is `C_3, C_4`. Standard StratifiedKFold cross-validation dramatically overestimates performance because it learns the hospital "signature" rather than the actual biological cancer signal.
+- **GroupKFold is the only truth**: By explicitly holding out entire hospitals (`Center ID`) during Cross-Validation, we forced the Random Forest to learn a Domain-Agnostic representation. We achieved an extremely robust `0.6862` CV AUC using this method.
+- **Adversarial Validation**: We discarded the top `2000` features most predictive of the domain (Train vs Test). This acts as a heavy regularizer against center-specific biases.
+- **LB vs CV Gap**: Despite the rigor of holding out whole centers during validation, the model bombed on the public leaderboard (test AUC `0.6241`), which is lower than the naive baseline. This suggests that dropping 2000 features either removed the actual cancer signal, or that the remaining features *still* contained center-specific artifacts that the RF latched onto. Extended statistical features (quantiles, skewness, kurtosis) are likely highly sensitive to domain shifts compared to the basic mean embeddings.
 
 ## 5. Next Steps
 - [x] **Ensemble methods**: Combine RF + PCA-Ridge predictions (stacking/blending) to leverage both linear and non-linear strengths.

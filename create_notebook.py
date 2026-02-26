@@ -1,0 +1,282 @@
+import json
+
+notebook = {
+    "cells": [
+        {
+            "cell_type": "markdown",
+            "metadata": {},
+            "source": [
+                "# J5 : End-to-End Image MIL Training on Google Colab\n",
+                "\n",
+                "Ce notebook permet d'entraîner un modèle **Multiple Instance Learning (MIL)** directement depuis les images brutes `.jpg`.\n",
+                "\n",
+                "**Problème :** Nous n'avons des labels (0 ou 1) qu'au niveau du patient (`bag`), et aucune information sur quelle tuile (1000 tuiles par patient) est cancéreuse ou non. Le MIL résout exactement ce problème.\n"
+            ]
+        },
+        {
+            "cell_type": "code",
+            "execution_count": None,
+            "metadata": {},
+            "outputs": [],
+            "source": [
+                "# 1. Connection au Drive pour récupérer les images\n",
+                "from google.colab import drive\n",
+                "drive.mount('/content/drive')\n",
+                "\n",
+                "# Assurez-vous d'avoir zippé le dossier 'images' original (ex: train_images.zip) \n",
+                "# et de l'avoir uploadé sur votre Drive.\n",
+                "# !unzip -q /content/drive/MyDrive/OWKIN_data/train_images.zip -d /content/data/\n",
+                "# !cp /content/drive/MyDrive/OWKIN_data/train_output.csv /content/data/\n"
+            ]
+        },
+        {
+            "cell_type": "code",
+            "execution_count": None,
+            "metadata": {},
+            "outputs": [],
+            "source": [
+                "import os\n",
+                "import glob\n",
+                "import torch\n",
+                "import torch.nn as nn\n",
+                "import torch.nn.functional as F\n",
+                "from torch.utils.data import Dataset, DataLoader\n",
+                "import torchvision.transforms as transforms\n",
+                "import torchvision.models as models\n",
+                "from PIL import Image\n",
+                "import pandas as pd\n",
+                "import numpy as np\n",
+                "from sklearn.model_selection import train_test_split\n",
+                "from tqdm.notebook import tqdm\n",
+                "import random\n"
+            ]
+        },
+        {
+            "cell_type": "markdown",
+            "metadata": {},
+            "source": [
+                "## 2. Dataset et Dataloader\n",
+                "\n",
+                "Pour éviter de saturer la VRAM de Colab avec 1000 images, on utilise une approche d'échantillonnage de `N` tuiles pendant l'entraînement."
+            ]
+        },
+        {
+            "cell_type": "code",
+            "execution_count": None,
+            "metadata": {},
+            "outputs": [],
+            "source": [
+                "class PatientBagDataset(Dataset):\n",
+                "    def __init__(self, df, img_dir, transform=None, is_train=True, num_samples_per_bag=100):\n",
+                "        self.df = df\n",
+                "        self.img_dir = img_dir\n",
+                "        self.transform = transform\n",
+                "        self.is_train = is_train\n",
+                "        self.num_samples_per_bag = num_samples_per_bag\n",
+                "        \n",
+                "    def __len__(self):\n",
+                "        return len(self.df)\n",
+                "    \n",
+                "    def __getitem__(self, idx):\n",
+                "        row = self.df.iloc[idx]\n",
+                "        patient_id = row['Sample ID'].replace('.npy', '') # ex: ID_001\n",
+                "        label = row['Target']\n",
+                "        \n",
+                "        # Récupérer toutes les tuiles\n",
+                "        patient_folder = os.path.join(self.img_dir, patient_id)\n",
+                "        all_tiles = glob.glob(os.path.join(patient_folder, \"*.jpg\"))\n",
+                "        \n",
+                "        # Echantillonnage : Charger 100 images aléatoires pour limiter la RAM si en train\n",
+                "        # En validation/test, on pourrait vouloir toutes les 1000, mais ça prend beaucoup de RAM (chunking requis)\n",
+                "        if self.is_train and len(all_tiles) > self.num_samples_per_bag:\n",
+                "            selected_tiles = random.sample(all_tiles, self.num_samples_per_bag)\n",
+                "        else:\n",
+                "            selected_tiles = random.sample(all_tiles, min(len(all_tiles), self.num_samples_per_bag))\n",
+                "            \n",
+                "        images = []\n",
+                "        for img_path in selected_tiles:\n",
+                "            img = Image.open(img_path).convert('RGB')\n",
+                "            if self.transform:\n",
+                "                img = self.transform(img)\n",
+                "            images.append(img)\n",
+                "            \n",
+                "        # Stack les images en un tenseur [num_samples, 3, H, W]\n",
+                "        bag = torch.stack(images)\n",
+                "        label = torch.tensor(label, dtype=torch.float32)\n",
+                "        \n",
+                "        return bag, label\n",
+                "\n",
+                "# Data Augmentation standard pour ImageNet\n",
+                "train_transform = transforms.Compose([\n",
+                "    transforms.RandomHorizontalFlip(),\n",
+                "    transforms.RandomVerticalFlip(),\n",
+                "    transforms.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.1, hue=0.05),\n",
+                "    transforms.Resize((224, 224)),\n",
+                "    transforms.ToTensor(),\n",
+                "    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])\n",
+                "])\n",
+                "\n",
+                "val_transform = transforms.Compose([\n",
+                "    transforms.Resize((224, 224)),\n",
+                "    transforms.ToTensor(),\n",
+                "    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])\n",
+                "])\n"
+            ]
+        },
+        {
+            "cell_type": "markdown",
+            "metadata": {},
+            "source": [
+                "## 3. Le Modèle AB-MIL (Attention-Based Multiple Instance Learning)\n",
+                "L'architecture sépare l'extraction de features par un CNN classique et l'agrégation via un mécanisme d'Attention."
+            ]
+        },
+        {
+            "cell_type": "code",
+            "execution_count": None,
+            "metadata": {},
+            "outputs": [],
+            "source": [
+                "class AttentionMIL(nn.Module):\n",
+                "    def __init__(self, freeze_cnn=True):\n",
+                "        super(AttentionMIL, self).__init__()\n",
+                "        \n",
+                "        # 1. Feature Extractor (Backbone ResNet18 léger)\n",
+                "        weights = models.ResNet18_Weights.IMAGENET1K_V1\n",
+                "        resnet = models.resnet18(weights=weights)\n",
+                "        self.feature_extractor = nn.Sequential(*list(resnet.children())[:-1]) # supprime fc layer\n",
+                "        self.feature_dim = 512\n",
+                "        \n",
+                "        if freeze_cnn:\n",
+                "            for param in self.feature_extractor.parameters():\n",
+                "                param.requires_grad = False\n",
+                "                \n",
+                "        # 2. Attention Mechanism (Ilse et al.)\n",
+                "        self.attention_V = nn.Sequential(\n",
+                "            nn.Linear(self.feature_dim, 128),\n",
+                "            nn.Tanh()\n",
+                "        )\n",
+                "        self.attention_w = nn.Linear(128, 1)\n",
+                "        \n",
+                "        # 3. Classifier final\n",
+                "        self.classifier = nn.Sequential(\n",
+                "            nn.Linear(self.feature_dim, 1),\n",
+                "            nn.Sigmoid()\n",
+                "        )\n",
+                "\n",
+                "    def forward(self, x):\n",
+                "        # x: [bag_size, C, H, W]\n",
+                "        bag_size = x.size(0)\n",
+                "        \n",
+                "        # Extraction de features (CNN)\n",
+                "        h = self.feature_extractor(x)  # [bag_size, 512, 1, 1]\n",
+                "        h = h.view(bag_size, -1)       # [bag_size, 512]\n",
+                "        \n",
+                "        # Calcul de l'Attention (Poids)\n",
+                "        A = self.attention_V(h)  # [bag_size, 128]\n",
+                "        A = self.attention_w(A)  # [bag_size, 1]\n",
+                "        A = torch.transpose(A, 1, 0)  # [1, bag_size]\n",
+                "        A = F.softmax(A, dim=1)  # Softmax over N instances -> [1, bag_size]\n",
+                "        \n",
+                "        # Agrégation (Moyenne pondérée des features selon l'attention)\n",
+                "        M = torch.mm(A, h)  # [1, bag_size] x [bag_size, 512] -> [1, 512]\n",
+                "        \n",
+                "        # Prédiction Finale\n",
+                "        Y_prob = self.classifier(M) # [1, 1]\n",
+                "        \n",
+                "        return Y_prob.squeeze(), A\n"
+            ]
+        },
+        {
+            "cell_type": "markdown",
+            "metadata": {},
+            "source": [
+                "## 4. Préparation et Boucle d'Entraînement\n"
+            ]
+        },
+        {
+            "cell_type": "code",
+            "execution_count": None,
+            "metadata": {},
+            "outputs": [],
+            "source": [
+                "# Chemins (à adapter selon là où vous avez unzipé)\n",
+                "IMG_DIR = '/content/data/images'\n",
+                "LABELS_CSV = '/content/data/train_output.csv'\n",
+                "\n",
+                "# Création DataFrame fake ou lecture pour qu'il soit exécutable après adaptation\n",
+                "# df = pd.read_csv(LABELS_CSV)\n",
+                "# df_train, df_val = train_test_split(df, test_size=0.2, random_state=42, stratify=df['Target'])\n",
+                "\n",
+                "# train_dataset = PatientBagDataset(df_train, IMG_DIR, train_transform, is_train=True, num_samples_per_bag=64)\n",
+                "# val_dataset = PatientBagDataset(df_val, IMG_DIR, val_transform, is_train=False, num_samples_per_bag=128)\n",
+                "\n",
+                "# Note: batch_size = 1 (on traite un patient / un bag à la fois)\n",
+                "# train_loader = DataLoader(train_dataset, batch_size=1, shuffle=True)\n",
+                "# val_loader = DataLoader(val_dataset, batch_size=1, shuffle=False)\n",
+                "\n",
+                "device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')\n",
+                "model = AttentionMIL(freeze_cnn=True).to(device)\n",
+                "optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4, weight_decay=1e-3)\n",
+                "criterion = nn.BCELoss()\n",
+                "\n",
+                "def train(epochs):\n",
+                "    print(f\"Training on {device}...\")\n",
+                "    for epoch in range(epochs):\n",
+                "        model.train()\n",
+                "        train_loss = 0.0\n",
+                "        \n",
+                "        # for bag, label in tqdm(train_loader):\n",
+                "        #     bag, label = bag.squeeze(0).to(device), label.to(device) # bag -> [N, 3, 224, 224]\n",
+                "            \n",
+                "        #     optimizer.zero_grad()\n",
+                "        #     prob, A = model(bag)\n",
+                "            \n",
+                "        #     loss = criterion(prob, label[0])\n",
+                "        #     loss.backward()\n",
+                "        #     optimizer.step()\n",
+                "            \n",
+                "        #     train_loss += loss.item()\n",
+                "            \n",
+                "        # val_loss = validate()\n",
+                "        # print(f\"Epoch {epoch+1} | Train Loss: {train_loss/len(train_loader):.4f} | Val Loss: {val_loss:.4f}\")\n",
+                "\n",
+                "def validate():\n",
+                "    model.eval()\n",
+                "    val_loss = 0.0\n",
+                "    with torch.no_grad():\n",
+                "        pass\n",
+                "        # for bag, label in val_loader:\n",
+                "        #     bag, label = bag.squeeze(0).to(device), label.to(device)\n",
+                "        #     prob, _ = model(bag)\n",
+                "        #     loss = criterion(prob, label[0])\n",
+                "        #     val_loss += loss.item()\n",
+                "    # return val_loss / len(val_loader)\n"
+            ]
+        }
+    ],
+    "metadata": {
+        "kernelspec": {
+            "display_name": "Python 3",
+            "language": "python",
+            "name": "python3"
+        },
+        "language_info": {
+            "codemirror_mode": {
+                "name": "ipython",
+                "version": 3
+            },
+            "mimetype": "text/x-python",
+            "name": "python",
+            "nbconvert_exporter": "python",
+            "pygments_lexer": "ipython3",
+            "version": "3.8.0"
+        }
+    },
+    "nbformat": 4,
+    "nbformat_minor": 4
+}
+
+with open('/Users/maximilienlucille/gitrepo/OWKIN_ML2/J5_Colab_Image_MIL.ipynb', 'w') as f:
+    json.dump(notebook, f, indent=4)
+
