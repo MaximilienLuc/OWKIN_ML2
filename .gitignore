@@ -4,3 +4,4 @@ test_input/
 *.jpg
 *.jpeg
 *.csv
+.DS_Store
