@@ -1,0 +1,40 @@
+\contentsline {section}{\numberline {1}Introduction}{3}{section.1}%
+\contentsline {subsection}{\numberline {1.1}Challenge-specific constraints}{3}{subsection.1.1}%
+\contentsline {subsection}{\numberline {1.2}Evaluation metric}{3}{subsection.1.2}%
+\contentsline {section}{\numberline {2}Dataset exploration and preprocessing}{3}{section.2}%
+\contentsline {subsection}{\numberline {2.1}Data structure}{3}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}Exploratory analysis}{4}{subsection.2.2}%
+\contentsline {paragraph}{Class distribution.}{4}{section*.2}%
+\contentsline {paragraph}{Center distribution and domain shift.}{4}{section*.3}%
+\contentsline {paragraph}{Feature statistics.}{4}{section*.5}%
+\contentsline {subsection}{\numberline {2.3}Preprocessing pipeline}{4}{subsection.2.3}%
+\contentsline {section}{\numberline {3}Feature engineering}{4}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Mean pooling (baseline)}{5}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}Extended statistics (mean, std, max)}{5}{subsection.3.2}%
+\contentsline {subsection}{\numberline {3.3}Full statistical profile (9 statistics)}{5}{subsection.3.3}%
+\contentsline {section}{\numberline {4}Predictive pipeline and model exploration}{5}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Iteration 1: Baseline Random Forest + Optuna}{5}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Iteration 2: XGBoost with feature engineering}{6}{subsection.4.2}%
+\contentsline {paragraph}{Adversarial validation.}{6}{section*.8}%
+\contentsline {subsection}{\numberline {4.3}Iteration 3: PCA + regularized linear models}{6}{subsection.4.3}%
+\contentsline {subsection}{\numberline {4.4}Iteration 4: RF + PCA-Ridge ensemble}{7}{subsection.4.4}%
+\contentsline {subsection}{\numberline {4.5}Iteration 5: Extended features with conservative RF}{7}{subsection.4.5}%
+\contentsline {subsection}{\numberline {4.6}Iteration 6: Domain-agnostic pipeline}{7}{subsection.4.6}%
+\contentsline {subsection}{\numberline {4.7}Iteration 7: Attention-based MIL (deep learning)}{8}{subsection.4.7}%
+\contentsline {subsection}{\numberline {4.8}Iteration 8: Anomaly detection MIL}{8}{subsection.4.8}%
+\contentsline {subsection}{\numberline {4.9}Iteration 9: Rank-based ensemble}{8}{subsection.4.9}%
+\contentsline {subsection}{\numberline {4.10}Iteration 10: Late-stage revisit: XGBoost \& LightGBM with Optuna}{9}{subsection.4.10}%
+\contentsline {section}{\numberline {5}Results and discussion}{9}{section.5}%
+\contentsline {subsection}{\numberline {5.1}Summary of all submissions}{9}{subsection.5.1}%
+\contentsline {subsection}{\numberline {5.2}Key findings}{11}{subsection.5.2}%
+\contentsline {paragraph}{1. Simplicity wins in low-data regimes.}{11}{section*.14}%
+\contentsline {paragraph}{2. Adding features hurts when $n \ll d$.}{11}{section*.15}%
+\contentsline {paragraph}{3. CV-LB gap reveals domain shift.}{11}{section*.16}%
+\contentsline {paragraph}{4. Domain-agnostic approaches require careful calibration.}{11}{section*.17}%
+\contentsline {paragraph}{5. Ensembling does not always help.}{11}{section*.18}%
+\contentsline {paragraph}{6. Random Forest's superiority is algorithmic, not accidental.}{11}{section*.19}%
+\contentsline {section}{\numberline {6}Cross-validation strategy}{11}{section.6}%
+\contentsline {section}{\numberline {7}Approaches not pursued or abandoned}{12}{section.7}%
+\contentsline {subsection}{\numberline {7.1}ResNet finetuning on raw images}{12}{subsection.7.1}%
+\contentsline {subsection}{\numberline {7.2}LightGBM on combined features}{12}{subsection.7.2}%
+\contentsline {section}{\numberline {8}Conclusion}{12}{section.8}%
