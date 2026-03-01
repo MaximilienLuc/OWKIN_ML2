@@ -5,3 +5,8 @@ test_input/
 *.jpeg
 *.csv
 .DS_Store
+.ipynb_checkpoints/
+__pycache__/
+*.pyc
+*.pkl
+*.h5
