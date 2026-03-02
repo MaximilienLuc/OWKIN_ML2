@@ -1,6 +1,9 @@
 \documentclass[11pt,a4paper]{article}
 
 % ── Packages ──────────────────────────────────────────────────
+% \usepackage{enumitem}
+% \usepackage{titlesec}
+
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage{lmodern}
@@ -10,7 +13,7 @@
 \usepackage{booktabs}
 \usepackage{hyperref}
 \usepackage{xcolor}
-\usepackage{enumitem}
+% \usepackage{enumitem}
 \usepackage{float}
 \usepackage{caption}
 \usepackage{subcaption}
@@ -18,6 +21,13 @@
 \usepackage{algpseudocode}
 \usepackage{listings}
 \usepackage{natbib}
+\usepackage{titlesec}
+
+\titleformat{\subsection}
+  {\large\bfseries}
+  {}
+  {0em}
+  {}[\titlerule]
 
 \hypersetup{
     colorlinks=true,
@@ -39,27 +49,60 @@
 }
 
 % ── Title ─────────────────────────────────────────────────────
-\title{%
-    \textbf{Predicting Cancer Subtypes from Histopathological Slides}\\[0.3em]
-    \large OWKIN Machine Learning Challenge -- Final Report
-}
-\author{
-    Nicolas Trancart \\
-    \texttt{nicolas.trancart@polytechnique.edu}
-    \and
-    Maximilien Lucille \\
-    \texttt{maximilien.lucille@polytechnique.edu}
-}
-\date{March 2026}
-
 \begin{document}
-\maketitle
+
+\begin{titlepage}
+    \centering
+    \vspace*{3cm}
+    
+    {\scshape\Large École Polytechnique \par}
+    \vspace{2cm}
+    
+    \hrule height 1.5pt
+    \vspace{1.5cm}
+    {\huge\bfseries Detecting PIK3CA mutation in Breast Cancer from Histopathological Slides\par}
+    \vspace{1cm}
+    {\LARGE\itshape OWKIN Machine Learning Challenge\par}
+    \vspace{1.5cm}
+    \hrule height 1.5pt
+    \vspace{3cm}
+    
+    {\Large\textbf{Nicolas Trancart} \\[-0.2em]
+    \normalsize\texttt{nicolas.trancart@polytechnique.edu}\par}
+    \vspace{1cm}
+    
+    {\Large\textbf{Maximilien Lucille} \\[-0.2em]
+    \normalsize\texttt{maximilien.lucille@polytechnique.edu}\par}
+    
+    \vfill
+    {\Large 1st March 2026\par}
+\end{titlepage}
 
 % ══════════════════════════════════════════════════════════════
+\vspace*{\fill}
 \begin{abstract}
-This report describes our approach to the OWKIN Machine Learning Challenge, a binary classification task on histopathological whole slide images represented as bags of pre-extracted MoCo (Momentum Contrast) features. With only 344 training samples and 149 test samples across multiple hospital centers, the challenge centers on building a generalizable predictive pipeline under severe data scarcity and domain shift. We explored a systematic progression from baseline Random Forest models through XGBoost, PCA with regularized linear models, extended feature statistics, attention-based Multiple Instance Learning (AB-MIL), anomaly detection MIL, and finally ensemble methods. Our best public leaderboard score of \textbf{0.6554 AUC} (55th public rank) was achieved with a simple Optuna-tuned Random Forest on mean-pooled MoCo features, a result we believe would rank \textbf{3rd on the private leaderboard}, demonstrating the importance of resisting overfitting and trusting parsimonious models. We document each iteration, justify our design choices, and analyze why simpler methods outperformed more complex ones in this low-data regime.
-\end{abstract}
+\itshape
 
+\noindent This report presents our approach to the OWKIN Machine Learning Challenge, a weakly supervised binary classification task aiming to predict \textit{PIK3CA} mutation status from histopathological whole-slide images represented as bags of pre-extracted MoCo features. 
+The dataset comprises 344 training patients and 149 test patients originating from different hospital centers, creating a challenging setting characterized by small sample size, high dimensionality, and pronounced domain shift.
+
+We systematically explored multiple aggregation strategies and modeling approaches, including mean and max pooling, extended statistical summaries, regularized linear models, gradient boosting, attention-based Multiple Instance Learning (MIL), anomaly detection, and ensemble methods. 
+Our best public leaderboard performance (AUC = 0.6554, 55th rank) was achieved with a simple Optuna-tuned Random Forest applied to mean-pooled features.
+
+Our experiments provide empirical evidence that the mutation signal is weak, semi-localized, and variance-dominated under domain shift.
+The results suggest that the \textit{PIK3CA} mutation signal is weak and moderately diffuse, rather than being driven by a few highly discriminative tiles. 
+Increasing model complexity or expanding feature dimensionality systematically improved cross-validation scores but degraded generalization performance, revealing variance dominance in this low-$n$, high-$d$ regime.
+
+We further demonstrate that domain shift across hospital centers constitutes the primary bottleneck for generalization. 
+Cross-validation strategies that fail to simulate this shift yield systematically optimistic estimates, and overly aggressive domain-invariant feature pruning may inadvertently remove genuine biological signal.
+
+Overall, this study highlights that, under severe data scarcity and distribution shift, parsimonious models with implicit variance control can outperform more expressive methods. 
+The findings emphasize the importance of understanding signal structure and validation design rather than relying solely on model complexity.
+
+\end{abstract}
+\vspace*{\fill}
+
+\newpage
 \tableofcontents
 \newpage
 
@@ -67,31 +110,80 @@ This report describes our approach to the OWKIN Machine Learning Challenge, a bi
 \section{Introduction}
 \label{sec:intro}
 
-Computational pathology has emerged as a transformative application of machine learning in oncology. Whole slide images (WSIs) are digitized at high resolution and can be analyzed by algorithms to predict molecular subtypes, treatment responses, or patient prognosis. However, these images are typically gigapixel-scale, making direct classification infeasible. Instead, the standard approach involves: (i)~tiling the WSI into smaller patches (tiles), (ii)~extracting features from each tile using a pre-trained encoder, and (iii)~aggregating tile-level features into a slide-level representation for classification.
+\subsection{Medical and Scientific Context}
 
-The OWKIN Challenge adopts this paradigm. Each patient's slide has been pre-processed into $\sim$1000 tiles, and each tile has been encoded using a \textbf{MoCo v2} (Momentum Contrast) self-supervised model pre-trained on histopathology images. The task is binary classification: predict the cancer subtype label (0 or 1) for each patient from these tile-level features.
+Breast cancer is one of the most common cancers worldwide. 
+Modern treatment strategies increasingly rely on molecular characteristics of the tumor, in addition to its visual appearance under the microscope.
+
+One important molecular alteration is the \textit{PIK3CA} mutation. 
+This mutation affects the PI3K signaling pathway, which regulates cell growth and survival. 
+It is present in a significant proportion of breast cancer patients and may influence prognosis and response to targeted therapies.
+
+In clinical practice, the presence of a \textit{PIK3CA} mutation is determined using genetic sequencing techniques. 
+However, these techniques are costly and not always available. 
+Being able to predict the mutation directly from routine histopathology images would therefore be valuable, especially in low-resource settings.
+
+Whole-Slide Images (WSIs) are high-resolution digital scans of tumor tissue. 
+They contain rich morphological information but are extremely large and complex. 
+The challenge is to determine whether subtle visual patterns in these images are associated with the presence of a \textit{PIK3CA} mutation.
+
+\subsection{Problem Formulation}
+
+The task is formulated as a binary classification problem at the patient level. 
+For each patient, the goal is to predict the presence (1) or absence (0) of a \textit{PIK3CA} mutation using histopathology data.
+
+Each patient is represented by approximately 1,000 image tiles extracted from a Whole-Slide Image. 
+However, labels are available only at the patient level. 
+We do not know which specific regions of the tissue may carry the mutation-related signal.
+
+This defines a weakly supervised learning setting. 
+More precisely, the problem follows a Multiple Instance Learning (MIL) structure: each patient corresponds to a bag of tiles, and only the bag is labeled. 
+The model must therefore learn how to aggregate tile-level information into a single patient-level prediction.
 
 \subsection{Challenge-specific constraints}
 
-Several factors make this challenge particularly difficult:
+Several structural characteristics make this task particularly difficult.
 
-\begin{itemize}[nosep]
-    \item \textbf{Extreme data scarcity:} Only $n=344$ training samples and $n=149$ test samples.
-    \item \textbf{High dimensionality:} Each patient is represented by a $1000 \times 2048$ feature matrix (after removing coordinates), yielding a very high-dimensional representation even after aggregation.
-    \item \textbf{Domain shift:} The data originates from 5 hospital centers. The training set contains centers $\{C_1, C_2, C_5\}$ while the test set contains centers $\{C_3, C_4\}$. This means the model must generalize across unseen institutions with potentially different staining protocols, scanners, and patient demographics.
-    \item \textbf{Multiple Instance Learning (MIL) structure:} Labels are assigned at the patient (bag) level, not at the tile (instance) level. Only a subset of tiles may be diagnostically relevant.
-\end{itemize}
+\paragraph{Small sample regime.}
+The training set contains only $n = 344$ patients, while the test set contains $n = 149$ patients. 
+Learning reliable patterns from a limited number of samples while avoiding overfitting is a central challenge.
 
-\subsection{Evaluation metric}
+\paragraph{High dimensionality.}
+Each tile is represented by a 2048-dimensional feature vector extracted using a pre-trained neural network. 
+As a result, each patient is described by a $1000 \times 2048$ feature matrix before aggregation. 
+Even after summarizing tile-level features, the resulting representation remains high-dimensional relative to the number of patients.
 
-The evaluation metric is the \textbf{Area Under the Receiver Operating Characteristic Curve (AUC-ROC)}. This metric measures the model's ability to rank positive samples above negative samples, regardless of the decision threshold. Formally:
+\paragraph{Domain shift.}
+The data originate from five hospital centers. 
+The training set contains slides from centers $\{C1, C2, C5\}$, while the test set contains slides from centers $\{C3, C4\}$. 
+Differences in staining protocols, scanners, and patient populations may introduce systematic variations. 
+The model must therefore generalize to unseen institutions.
 
-\begin{equation}
-    \text{AUC} = \frac{1}{n_+ \cdot n_-} \sum_{i \in \mathcal{P}} \sum_{j \in \mathcal{N}} \mathbf{1}\left[\hat{y}_i > \hat{y}_j\right]
-\end{equation}
+\paragraph{MIL structure.}
+Because labels are assigned at the patient level and not at the tile level, only a subset of tiles may contain diagnostically relevant information. 
+Designing an appropriate aggregation strategy is therefore critical.
 
-where $\mathcal{P}$ and $\mathcal{N}$ are the sets of positive and negative samples, and $\hat{y}_i$ is the predicted probability for sample $i$. An AUC of 0.5 corresponds to random guessing, while 1.0 indicates perfect ranking. AUC is threshold-invariant and class-balance-invariant, making it well-suited for this challenge where class proportions may differ between train and test sets.
+\subsection{Evaluation Metric}
 
+Model performance is evaluated using the Area Under the Receiver Operating Characteristic Curve (AUC-ROC).
+
+The AUC measures the ability of the model to rank positive patients above negative patients, independently of any classification threshold. 
+Formally,
+
+\[
+\text{AUC} = 
+\frac{1}{n_{+} \cdot n_{-}}
+\sum_{i \in \mathcal{P}}
+\sum_{j \in \mathcal{N}}
+\mathbb{1} \left[ \hat{y}_i > \hat{y}_j \right],
+\]
+
+where $\mathcal{P}$ and $\mathcal{N}$ denote the sets of positive and negative patients, and $\hat{y}_i$ is the predicted probability for patient $i$.
+
+An AUC of 0.5 corresponds to random guessing, while an AUC of 1.0 indicates perfect ranking. 
+This metric is appropriate in this setting because it is robust to class imbalance and focuses on ranking quality rather than absolute probability calibration.
+
+\newpage
 % ══════════════════════════════════════════════════════════════
 \section{Dataset exploration and preprocessing}
 \label{sec:data}
@@ -146,6 +238,7 @@ Our preprocessing involves:
     \item \textbf{Standardization:} Applying \texttt{StandardScaler} fitted on the training set only (for PCA-based pipelines) to prevent data leakage.
 \end{enumerate}
 
+\newpage
 % ══════════════════════════════════════════════════════════════
 \section{Feature engineering}
 \label{sec:features}
@@ -179,25 +272,139 @@ We further expanded the feature set to 9 statistics per dimension:
 
 This produces 18,432 features per patient, providing a comprehensive distributional fingerprint. However, this also dramatically increases the risk of overfitting given $n=344$.
 
+\newpage
+\section{Understanding the Nature of the Mutation Signal}
+\label{sec:signal}
+
+A central question of this project is not only how to predict the mutation, but what kind of signal the mutation induces in histopathological images. 
+Understanding whether the \textit{PIK3CA} mutation manifests as a strong localized pattern or as a subtle global alteration is essential to design appropriate aggregation and modeling strategies.
+
+\subsection{Localized versus Diffuse Signal Hypothesis}
+
+We formulated two competing hypotheses regarding the spatial structure of the mutation signal.
+
+\paragraph{Localized hypothesis.}
+If the mutation generates highly discriminative morphological patterns confined to a small subset of tiles (``hotspots''), then max pooling or top-$k$ pooling should be effective. 
+Under this assumption, only a few tiles would carry strong predictive information, and capturing the highest activation values would be sufficient for patient-level prediction.
+
+\paragraph{Diffuse hypothesis.}
+Alternatively, the mutation may induce subtle but widespread changes in tissue morphology. 
+In this case, no single tile would be strongly discriminative, but the overall distribution of tile features would shift slightly between mutated and non-mutated patients. 
+Mean pooling would then be more appropriate, as it captures global distributional differences.
+
+Empirically, mean pooling consistently outperformed strict max pooling strategies, while extended statistics (e.g., skewness, kurtosis, high-order moments) did not yield stable improvements on the leaderboard. 
+This suggests that the signal is not purely sparse and extreme, but neither is it uniformly distributed across all tiles.
+
+\subsection{Evidence from Model Behavior}
+
+The behavior of different models further informs our understanding of the signal structure.
+
+First, increasing model complexity (gradient boosting, deep attention-based MIL) did not significantly improve performance over a moderately regularized Random Forest applied to mean-pooled features. 
+If the mutation signal relied on highly non-linear interactions between tiles, more expressive models would be expected to provide substantial gains.
+
+Second, expanding the feature space from 2048 dimensions (mean pooling) to 6144 or 18,432 dimensions (extended statistics) improved cross-validation scores but degraded leaderboard performance. 
+This indicates that richer distributional summaries may capture center-specific artifacts rather than robust biological patterns.
+
+Taken together, these observations suggest that the mutation signal is weak, moderately structured, and primarily encoded in global shifts of the tile feature distribution rather than in rare, extreme activations.
+
+\subsection{Interpretation of Tile-Level Probability Distributions}
+
+To further investigate this hypothesis, we analyzed tile-level probability distributions (see Section~6.3). 
+Tiles from mutated patients exhibit a heavier right tail compared to non-mutated patients, indicating the presence of moderately high-probability regions (Figure~\ref{fig:tile_proba}).
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{tile_proba_distribution.png}
+\caption{Average Tile-Level Probability Distributions per Patient Group. The mutated group shows a heavier right tail, indicating slightly elevated probabilities across subsets of tiles rather than a few highly discriminative regions.}
+\label{fig:tile_proba}
+\end{figure}
+
+However, these high-probability tiles are not sufficiently dominant to allow pure max pooling to outperform mean aggregation. 
+Instead, their contribution appears to shift the average tile-level prediction upward, explaining why mean pooling combined with a variance-reducing model such as Random Forest performs robustly.
+
+Overall, the mutation signal appears to be semi-localized but weak: it manifests through a combination of slightly elevated probabilities across subsets of tiles rather than through singular, highly discriminative regions.
+
+This characterization provides a unifying explanation for our empirical findings and guides the interpretation of subsequent modeling results.
+
+\newpage
+% ══════════════════════════════════════════════════════════════
+\section{Cross-validation strategy}
+\label{sec:cv}
+
+Designing a reliable cross-validation (CV) procedure was one of the main methodological challenges of this competition. 
+Because the training and test sets originate from different hospital centers, standard validation strategies may produce overly optimistic performance estimates.
+
+\subsection{Why Standard Cross-Validation Overestimates Performance}
+
+We first employed StratifiedKFold (k = 5), which preserves class balance across folds. 
+However, this strategy mixes samples from the same hospital centers across training and validation splits. 
+The model is therefore evaluated on data drawn from the same domain distribution it was trained on.
+
+In the presence of center-specific artifacts (e.g., staining intensity, scanner characteristics), the model may learn domain signatures rather than purely biological features. 
+This domain leakage leads to systematically optimistic AUC estimates and explains the consistent gap observed between cross-validation scores and public leaderboard performance.
+
+\subsection{GroupKFold and High Variance under Limited Domains}
+
+To better simulate the test scenario, we implemented GroupKFold using hospital center ID as the grouping variable. 
+This ensures that entire centers are held out during validation, approximating an out-of-domain evaluation.
+
+However, the training data contain only three centers (\{C1, C2, C5\}). 
+GroupKFold therefore operates over only three groups, producing at most three effective validation splits. 
+With such few domains, performance estimates exhibit high variance and depend strongly on which center is held out.
+
+\subsection{Limitations of Leave-One-Center-Out (LOCO)}
+
+A Leave-One-Center-Out (LOCO) strategy would most faithfully reproduce the test setting. 
+Yet, with only three training centers, LOCO also yields three folds, resulting in unstable AUC estimates and unreliable model selection due to small validation sample sizes.
+
+\subsection{Practical Compromise}
+
+Given these constraints, we adopted patient-level StratifiedKFold with multiple repeats as our primary model selection strategy. 
+Although this approach does not fully capture domain shift, it provides lower-variance estimates and more stable hyperparameter optimization.
+
+Overall, this competition highlights a fundamental bias–variance tradeoff in validation under domain shift: domain-aware strategies reduce bias but increase variance when the number of domains is small, whereas standard CV provides stability at the cost of optimistic estimates.
+
+\newpage
 % ══════════════════════════════════════════════════════════════
 \section{Predictive pipeline and model exploration}
 \label{sec:models}
 
 We followed an iterative experimental approach, progressively exploring more complex methods while maintaining rigorous cross-validation. Figure~\ref{fig:pipeline} illustrates our overall pipeline architecture.
+The project can be interpreted as a structured exploration across three axes:
+(i) aggregation hypothesis,
+(ii) modeling hypothesis,
+(iii) domain generalization strategy.
+
 
 \begin{figure}[H]
 \centering
-\fbox{\parbox{0.85\textwidth}{\centering
-\textbf{Pipeline Architecture}\\[0.5em]
-\texttt{MoCo Features (1000 $\times$ 2048)}\\
-$\downarrow$\hspace{6em}$\searrow$\\
-\texttt{Statistical Aggregation}\hspace{2em}\texttt{AB-MIL (Deep Learning)}\\
-$\swarrow$\hspace{2em}$\downarrow$\hspace{6em}$\downarrow$\\
-\texttt{Random Forest}\hspace{1em}\texttt{PCA + Ridge}\hspace{4em}$|$\\
-$\searrow$\hspace{2em}$\downarrow$\hspace{2em}$\swarrow$\\
-\hspace{2em}\texttt{Ensemble (Averaging)}
+\fbox{\parbox{0.65\textwidth}{
+\vspace{0.5em}
+\centering
+{\large \textbf{Pipeline Architecture}}\\[1em]
+\begin{flushleft}
+\sffamily
+\hspace*{3em}\textbf{MoCo Features} (1000 $\times$ 2048)\\[0.4em]
+\hspace*{8em}$\downarrow$\\[0.4em]
+\hspace*{3em}\textbf{Aggregation Hypothesis}\\
+\hspace*{4em}$\vdash$ Mean (Global signal)\\
+\hspace*{4em}$\lfloor$ Max / Top-$k$ (Localized signal)\\[0.4em]
+\hspace*{8em}$\downarrow$\\[0.4em]
+\hspace*{3em}\textbf{Modeling Hypothesis}\\
+\hspace*{4em}$\vdash$ Linear boundary\\
+\hspace*{4em}$\vdash$ Non-linear trees\\
+\hspace*{4em}$\lfloor$ Attention MIL\\[0.4em]
+\hspace*{8em}$\downarrow$\\[0.4em]
+\hspace*{3em}\textbf{Domain Generalization Strategy}\\
+\hspace*{4em}$\vdash$ Stratified CV\\
+\hspace*{4em}$\vdash$ GroupKFold\\
+\hspace*{4em}$\lfloor$ Drift removal\\[0.4em]
+\hspace*{8em}$\downarrow$\\[0.4em]
+\hspace*{3em}\textbf{Final Ensemble}
+\end{flushleft}
+\vspace{0.2em}
 }}
-\caption{High-level pipeline architecture. MoCo features are processed through two paths: statistical aggregation for tabular models, and directly by the AB-MIL deep learning model. Predictions are combined via ensembling.}
+\caption{High-level pipeline architecture. We systematically explored different hypotheses across aggregation, modeling, and domain generalization strategies before combining them into a final ensemble.}
 \label{fig:pipeline}
 \end{figure}
 
@@ -260,7 +467,12 @@ To mitigate domain shift, we trained a classifier to distinguish training from t
 
 \textbf{Observation:} XGBoost consistently \emph{overfitted}, with a $\sim$0.05 gap between CV and leaderboard scores. The additional features (Std, Max) did not improve generalization; they likely introduced center-specific noise that XGBoost exploited. Adversarial validation helped slightly but was insufficient to close the gap.
 
-\subsection{Iteration 3: PCA + regularized linear models}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{xgboost_feature_importance.png}
+\caption{XGBoost Feature Importance (Weight), showing the relative contribution of the top features to the model.}
+\label{fig:xgb_importance}
+\end{figure}\subsection{Iteration 3: PCA + regularized linear models}
 
 To combat the curse of dimensionality, we applied PCA dimensionality reduction followed by regularized logistic regression. The pipeline:
 
@@ -410,8 +622,9 @@ Both models were trained with 40 Optuna trials, patient-level StratifiedKFold ($
     \end{tabular}
 \end{table}
 
-\textbf{Analysis:} The OOF AUC scores were strong (0.68+), on par with our earlier Random Forest experiments. Yet the public leaderboard scores collapsed to 0.58, revealing a generalization gap of over 0.10 AUC. Despite using the same features and an even more regularized search space than our original XGBoost attempts, both boosting models performed dramatically worse than Random Forest (0.6554). This definitively confirmed that the superiority of Random Forest on this task is \emph{algorithmic}, not merely a consequence of feature choices. Random Forest's bagging mechanism, i.e.\ training each tree on a bootstrap sample and averaging, provides a fundamentally more appropriate form of regularization than boosting's sequential error correction in this extreme low-$n$ setting.
+\textbf{Analysis:} The OOF AUC scores were strong (0.68+), on par with our earlier Random Forest experiments. Yet the public leaderboard scores collapsed to 0.58, revealing a generalization gap of over 0.10 AUC. Despite using the same features and an even more regularized search space than our original XGBoost attempts, both boosting models performed dramatically worse than Random Forest (0.6554). This strongly suggests that the superiority of Random Forest on this task is \emph{algorithmic}, not merely a consequence of feature choices. Random Forest's bagging mechanism, i.e.\ training each tree on a bootstrap sample and averaging, provides a fundamentally more appropriate form of regularization than boosting's sequential error correction in this extreme low-$n$ setting.
 
+\newpage
 % ══════════════════════════════════════════════════════════════
 \section{Results and discussion}
 \label{sec:results}
@@ -478,20 +691,21 @@ Our ensemble strategy (rank averaging with 5 models) underperformed the standalo
 \paragraph{6. Random Forest's superiority is algorithmic, not accidental.}
 Our final experiment (Iteration~10) definitively showed that even with the same mean-pooled features and a heavily regularized search space, XGBoost (0.5809) and the XGB+LGBM stacking (0.5929) performed far worse than Random Forest (0.6554). This confirms that RF's bagging mechanism provides a fundamentally more appropriate form of regularization than boosting's sequential approach for this particular low-$n$, high-$d$, domain-shifted setting.
 
-% ══════════════════════════════════════════════════════════════
-\section{Cross-validation strategy}
-\label{sec:cv}
+\subsection{Evidence for a Structural Performance Ceiling}
 
-Designing a reliable cross-validation strategy was one of the most challenging aspects of this competition. We experimented with three approaches:
+Across all experiments, model performance consistently converged within a narrow range (AUC $\approx$ 0.63–0.66 on the public leaderboard). 
+Despite exploring increasingly complex approaches — gradient boosting, extended statistical features (up to 18,432 dimensions), attention-based MIL, anomaly detection, and ensemble strategies — no method produced a substantial and stable improvement over the mean-pooled Random Forest baseline.
 
-\begin{enumerate}
-    \item \textbf{StratifiedKFold ($k=5$):} Ensures class balance in each fold but does not account for domain shift. Produces optimistic estimates.
-    \item \textbf{Patient-level StratifiedKFold:} All slides from the same patient are in the same fold, preventing data leakage. Our default approach.
-    \item \textbf{GroupKFold on Center~ID:} Entire hospitals are held out. Most realistic simulation of the test scenario but yields very high variance due to only 3 groups in training.
-\end{enumerate}
+Notably, boosting methods failed to outperform bagging-based Random Forests, and deep learning architectures did not yield clear gains despite their higher representational capacity. 
+Similarly, expanding the feature space with higher-order statistics improved cross-validation scores but degraded generalization performance.
 
-In retrospect, the ideal CV strategy might have been a \textbf{Leave-One-Center-Out} (LOCO) approach, which would simulate the test scenario exactly. However, with only 3 training centers, this produces only 3 folds with highly variable sizes, making AUC estimates unstable. The patient-level StratifiedKFold with $k \geq 3$ repeats proved to be the best practical compromise.
+This convergence suggests the presence of a structural performance ceiling inherent to the task. 
+Several factors may contribute to this limitation: (i) the MoCo embeddings may already compress most discriminative information, limiting downstream gains; (ii) the morphological signature of the \textit{PIK3CA} mutation may be intrinsically weak; and (iii) residual domain shift between hospital centers may introduce irreducible uncertainty.
 
+Taken together, these observations indicate that model complexity is not the primary bottleneck. 
+Rather, the limiting factor appears to be the strength and stability of the underlying biological signal under domain shift.
+
+\newpage
 % ══════════════════════════════════════════════════════════════
 \section{Approaches not pursued or abandoned}
 \label{sec:abandoned}
@@ -502,6 +716,7 @@ We attempted to fine-tune a ResNet18 directly on the raw tile images in a weakly
 \subsection{LightGBM on combined features}
 A LightGBM model trained on combined MoCo and ResNet aggregated features was planned but could not be completed due to the ResNet finetuning bottleneck.
 
+\newpage
 % ══════════════════════════════════════════════════════════════
 \section{Conclusion}
 \label{sec:conclusion}
@@ -520,6 +735,7 @@ This challenge reinforced several fundamental principles of applied machine lear
 
 Looking forward, promising directions include: (i)~learning domain-invariant representations via contrastive learning, (ii)~meta-learning approaches that explicitly model center-level distribution shifts, and (iii)~attention-based MIL with domain adaptation, such as DANN~\citep{ganin2016domain} applied to the tile aggregation step.
 
+\newpage
 \bibliographystyle{plainnat}
 \begin{thebibliography}{9}
 

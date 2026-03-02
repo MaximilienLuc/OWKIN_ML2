@@ -4,79 +4,101 @@
 \providecommand\HyField@AuxAddToCoFields[2]{}
 \@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{3}{section.1}\protected@file@percent }
 \newlabel{sec:intro}{{1}{3}{Introduction}{section.1}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {1.1}Challenge-specific constraints}{3}{subsection.1.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {1.2}Evaluation metric}{3}{subsection.1.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {2}Dataset exploration and preprocessing}{3}{section.2}\protected@file@percent }
-\newlabel{sec:data}{{2}{3}{Dataset exploration and preprocessing}{section.2}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Data structure}{3}{subsection.2.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Exploratory analysis}{4}{subsection.2.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Class distribution.}{4}{section*.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Center distribution and domain shift.}{4}{section*.3}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Distribution of samples across hospital centers.}}{4}{table.caption.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.1}Medical and Scientific Context}{3}{subsection.1.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.2}Problem Formulation}{3}{subsection.1.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.3}Challenge-specific constraints}{3}{subsection.1.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Small sample regime.}{3}{subsection.1.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{High dimensionality.}{3}{subsection.1.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Domain shift.}{3}{subsection.1.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{MIL structure.}{3}{subsection.1.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.4}Evaluation Metric}{4}{subsection.1.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {2}Dataset exploration and preprocessing}{5}{section.2}\protected@file@percent }
+\newlabel{sec:data}{{2}{5}{Dataset exploration and preprocessing}{section.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Data structure}{5}{subsection.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Exploratory analysis}{5}{subsection.2.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Class distribution.}{5}{subsection.2.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Center distribution and domain shift.}{5}{subsection.2.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Distribution of samples across hospital centers.}}{5}{table.caption.1}\protected@file@percent }
 \providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
-\newlabel{tab:centers}{{1}{4}{Distribution of samples across hospital centers}{table.caption.4}{}}
-\@writefile{toc}{\contentsline {paragraph}{Feature statistics.}{4}{section*.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}Preprocessing pipeline}{4}{subsection.2.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {3}Feature engineering}{4}{section.3}\protected@file@percent }
-\newlabel{sec:features}{{3}{4}{Feature engineering}{section.3}{}}
+\newlabel{tab:centers}{{1}{5}{Distribution of samples across hospital centers}{table.caption.1}{}}
+\@writefile{toc}{\contentsline {paragraph}{Feature statistics.}{5}{table.caption.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}Preprocessing pipeline}{5}{subsection.2.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3}Feature engineering}{7}{section.3}\protected@file@percent }
+\newlabel{sec:features}{{3}{7}{Feature engineering}{section.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Mean pooling (baseline)}{7}{subsection.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Extended statistics (mean, std, max)}{7}{subsection.3.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Full statistical profile (9 statistics)}{7}{subsection.3.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4}Understanding the Nature of the Mutation Signal}{8}{section.4}\protected@file@percent }
+\newlabel{sec:signal}{{4}{8}{Understanding the Nature of the Mutation Signal}{section.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Localized versus Diffuse Signal Hypothesis}{8}{subsection.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Localized hypothesis.}{8}{subsection.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Diffuse hypothesis.}{8}{subsection.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Evidence from Model Behavior}{8}{subsection.4.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Interpretation of Tile-Level Probability Distributions}{8}{subsection.4.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Average Tile-Level Probability Distributions per Patient Group. The mutated group shows a heavier right tail, indicating slightly elevated probabilities across subsets of tiles rather than a few highly discriminative regions.}}{9}{figure.caption.2}\protected@file@percent }
+\newlabel{fig:tile_proba}{{1}{9}{Average Tile-Level Probability Distributions per Patient Group. The mutated group shows a heavier right tail, indicating slightly elevated probabilities across subsets of tiles rather than a few highly discriminative regions}{figure.caption.2}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Cross-validation strategy}{10}{section.5}\protected@file@percent }
+\newlabel{sec:cv}{{5}{10}{Cross-validation strategy}{section.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}Why Standard Cross-Validation Overestimates Performance}{10}{subsection.5.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}GroupKFold and High Variance under Limited Domains}{10}{subsection.5.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.3}Limitations of Leave-One-Center-Out (LOCO)}{10}{subsection.5.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.4}Practical Compromise}{10}{subsection.5.4}\protected@file@percent }
 \citation{akiba2019optuna}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Mean pooling (baseline)}{5}{subsection.3.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Extended statistics (mean, std, max)}{5}{subsection.3.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Full statistical profile (9 statistics)}{5}{subsection.3.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {4}Predictive pipeline and model exploration}{5}{section.4}\protected@file@percent }
-\newlabel{sec:models}{{4}{5}{Predictive pipeline and model exploration}{section.4}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces High-level pipeline architecture. MoCo features are processed through two paths: statistical aggregation for tabular models, and directly by the AB-MIL deep learning model. Predictions are combined via ensembling.}}{5}{figure.caption.6}\protected@file@percent }
-\newlabel{fig:pipeline}{{1}{5}{High-level pipeline architecture. MoCo features are processed through two paths: statistical aggregation for tabular models, and directly by the AB-MIL deep learning model. Predictions are combined via ensembling}{figure.caption.6}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Iteration 1: Baseline Random Forest + Optuna}{5}{subsection.4.1}\protected@file@percent }
-\newlabel{sec:rf_baseline}{{4.1}{5}{Iteration 1: Baseline Random Forest + Optuna}{subsection.4.1}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Optuna search space for Random Forest baseline.}}{6}{table.caption.7}\protected@file@percent }
-\newlabel{tab:optuna_rf}{{2}{6}{Optuna search space for Random Forest baseline}{table.caption.7}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Iteration 2: XGBoost with feature engineering}{6}{subsection.4.2}\protected@file@percent }
-\newlabel{sec:adversarial}{{4.2}{6}{Adversarial validation}{section*.8}{}}
-\@writefile{toc}{\contentsline {paragraph}{Adversarial validation.}{6}{section*.8}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces XGBoost experiments.}}{6}{table.caption.9}\protected@file@percent }
-\newlabel{tab:xgb}{{3}{6}{XGBoost experiments}{table.caption.9}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Iteration 3: PCA + regularized linear models}{6}{subsection.4.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}Iteration 4: RF + PCA-Ridge ensemble}{7}{subsection.4.4}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Ensemble blending analysis on OOF predictions.}}{7}{table.caption.10}\protected@file@percent }
-\newlabel{tab:ensemble_oof}{{4}{7}{Ensemble blending analysis on OOF predictions}{table.caption.10}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.5}Iteration 5: Extended features with conservative RF}{7}{subsection.4.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.6}Iteration 6: Domain-agnostic pipeline}{7}{subsection.4.6}\protected@file@percent }
-\newlabel{sec:domain}{{4.6}{7}{Iteration 6: Domain-agnostic pipeline}{subsection.4.6}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6}Predictive pipeline and model exploration}{11}{section.6}\protected@file@percent }
+\newlabel{sec:models}{{6}{11}{Predictive pipeline and model exploration}{section.6}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces High-level pipeline architecture. We systematically explored different hypotheses across aggregation, modeling, and domain generalization strategies before combining them into a final ensemble.}}{11}{figure.caption.3}\protected@file@percent }
+\newlabel{fig:pipeline}{{2}{11}{High-level pipeline architecture. We systematically explored different hypotheses across aggregation, modeling, and domain generalization strategies before combining them into a final ensemble}{figure.caption.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.1}Iteration 1: Baseline Random Forest + Optuna}{11}{subsection.6.1}\protected@file@percent }
+\newlabel{sec:rf_baseline}{{6.1}{11}{Iteration 1: Baseline Random Forest + Optuna}{subsection.6.1}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Optuna search space for Random Forest baseline.}}{11}{table.caption.4}\protected@file@percent }
+\newlabel{tab:optuna_rf}{{2}{11}{Optuna search space for Random Forest baseline}{table.caption.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}Iteration 2: XGBoost with feature engineering}{12}{subsection.6.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Adversarial validation.}{12}{subsection.6.2}\protected@file@percent }
+\newlabel{sec:adversarial}{{6.2}{12}{Adversarial validation}{subsection.6.2}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces XGBoost experiments.}}{12}{table.caption.5}\protected@file@percent }
+\newlabel{tab:xgb}{{3}{12}{XGBoost experiments}{table.caption.5}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces XGBoost Feature Importance (Weight), showing the relative contribution of the top features to the model.}}{13}{figure.caption.6}\protected@file@percent }
+\newlabel{fig:xgb_importance}{{3}{13}{XGBoost Feature Importance (Weight), showing the relative contribution of the top features to the model}{figure.caption.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.3}Iteration 3: PCA + regularized linear models}{13}{subsection.6.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.4}Iteration 4: RF + PCA-Ridge ensemble}{13}{subsection.6.4}\protected@file@percent }
 \citation{ilse2018attention}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.7}Iteration 7: Attention-based MIL (deep learning)}{8}{subsection.4.7}\protected@file@percent }
-\newlabel{sec:abmil}{{4.7}{8}{Iteration 7: Attention-based MIL (deep learning)}{subsection.4.7}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.8}Iteration 8: Anomaly detection MIL}{8}{subsection.4.8}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.9}Iteration 9: Rank-based ensemble}{8}{subsection.4.9}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.10}Iteration 10: Late-stage revisit: XGBoost \& LightGBM with Optuna}{9}{subsection.4.10}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces Late-stage XGBoost and LightGBM experiments (mean-pooled 2048d features). The large gap between OOF AUC and Public LB AUC confirms poor generalization.}}{9}{table.caption.11}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {5}Results and discussion}{9}{section.5}\protected@file@percent }
-\newlabel{sec:results}{{5}{9}{Results and discussion}{section.5}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}Summary of all submissions}{9}{subsection.5.1}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {6}{\ignorespaces Summary of all submissions to the OWKIN Challenge. The provided baseline (Mean Pool + Logistic Regression) scored 0.6018.}}{10}{table.caption.12}\protected@file@percent }
-\newlabel{tab:submissions}{{6}{10}{Summary of all submissions to the OWKIN Challenge. The provided baseline (Mean Pool + Logistic Regression) scored 0.6018}{table.caption.12}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Comparative performance of all submitted models. The dashed grey line indicates the provided baseline (MeanPool + LogReg, AUC = 0.6018). The green bar highlights our best submission (RF + Optuna, AUC = 0.6554).}}{10}{figure.caption.13}\protected@file@percent }
-\newlabel{fig:comparison}{{2}{10}{Comparative performance of all submitted models. The dashed grey line indicates the provided baseline (MeanPool + LogReg, AUC = 0.6018). The green bar highlights our best submission (RF + Optuna, AUC = 0.6554)}{figure.caption.13}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Key findings}{11}{subsection.5.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{1. Simplicity wins in low-data regimes.}{11}{section*.14}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{2. Adding features hurts when $n \ll d$.}{11}{section*.15}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{3. CV-LB gap reveals domain shift.}{11}{section*.16}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{4. Domain-agnostic approaches require careful calibration.}{11}{section*.17}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{5. Ensembling does not always help.}{11}{section*.18}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{6. Random Forest's superiority is algorithmic, not accidental.}{11}{section*.19}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {6}Cross-validation strategy}{11}{section.6}\protected@file@percent }
-\newlabel{sec:cv}{{6}{11}{Cross-validation strategy}{section.6}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Ensemble blending analysis on OOF predictions.}}{14}{table.caption.7}\protected@file@percent }
+\newlabel{tab:ensemble_oof}{{4}{14}{Ensemble blending analysis on OOF predictions}{table.caption.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.5}Iteration 5: Extended features with conservative RF}{14}{subsection.6.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.6}Iteration 6: Domain-agnostic pipeline}{14}{subsection.6.6}\protected@file@percent }
+\newlabel{sec:domain}{{6.6}{14}{Iteration 6: Domain-agnostic pipeline}{subsection.6.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.7}Iteration 7: Attention-based MIL (deep learning)}{15}{subsection.6.7}\protected@file@percent }
+\newlabel{sec:abmil}{{6.7}{15}{Iteration 7: Attention-based MIL (deep learning)}{subsection.6.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.8}Iteration 8: Anomaly detection MIL}{15}{subsection.6.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.9}Iteration 9: Rank-based ensemble}{15}{subsection.6.9}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.10}Iteration 10: Late-stage revisit: XGBoost \& LightGBM with Optuna}{16}{subsection.6.10}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces Late-stage XGBoost and LightGBM experiments (mean-pooled 2048d features). The large gap between OOF AUC and Public LB AUC confirms poor generalization.}}{16}{table.caption.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {7}Results and discussion}{17}{section.7}\protected@file@percent }
+\newlabel{sec:results}{{7}{17}{Results and discussion}{section.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.1}Summary of all submissions}{17}{subsection.7.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {6}{\ignorespaces Summary of all submissions to the OWKIN Challenge. The provided baseline (Mean Pool + Logistic Regression) scored 0.6018.}}{17}{table.caption.9}\protected@file@percent }
+\newlabel{tab:submissions}{{6}{17}{Summary of all submissions to the OWKIN Challenge. The provided baseline (Mean Pool + Logistic Regression) scored 0.6018}{table.caption.9}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Comparative performance of all submitted models. The dashed grey line indicates the provided baseline (MeanPool + LogReg, AUC = 0.6018). The green bar highlights our best submission (RF + Optuna, AUC = 0.6554).}}{17}{figure.caption.10}\protected@file@percent }
+\newlabel{fig:comparison}{{4}{17}{Comparative performance of all submitted models. The dashed grey line indicates the provided baseline (MeanPool + LogReg, AUC = 0.6018). The green bar highlights our best submission (RF + Optuna, AUC = 0.6554)}{figure.caption.10}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.2}Key findings}{18}{subsection.7.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{1. Simplicity wins in low-data regimes.}{18}{subsection.7.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{2. Adding features hurts when $n \ll d$.}{18}{subsection.7.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{3. CV-LB gap reveals domain shift.}{18}{subsection.7.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{4. Domain-agnostic approaches require careful calibration.}{18}{subsection.7.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{5. Ensembling does not always help.}{18}{subsection.7.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{6. Random Forest's superiority is algorithmic, not accidental.}{18}{subsection.7.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.3}Evidence for a Structural Performance Ceiling}{18}{subsection.7.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {8}Approaches not pursued or abandoned}{20}{section.8}\protected@file@percent }
+\newlabel{sec:abandoned}{{8}{20}{Approaches not pursued or abandoned}{section.8}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.1}ResNet finetuning on raw images}{20}{subsection.8.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.2}LightGBM on combined features}{20}{subsection.8.2}\protected@file@percent }
 \citation{ganin2016domain}
+\@writefile{toc}{\contentsline {section}{\numberline {9}Conclusion}{21}{section.9}\protected@file@percent }
+\newlabel{sec:conclusion}{{9}{21}{Conclusion}{section.9}{}}
 \bibstyle{plainnat}
 \bibcite{akiba2019optuna}{{1}{2019}{{Akiba et al.}}{{}}}
 \bibcite{ilse2018attention}{{2}{2018}{{Ilse et al.}}{{}}}
 \bibcite{ganin2016domain}{{3}{2016}{{Ganin et al.}}{{}}}
 \bibcite{chen2020improved}{{4}{2020}{{Chen et al.}}{{}}}
 \bibcite{breiman2001random}{{5}{2001}{{Breiman}}{{}}}
-\@writefile{toc}{\contentsline {section}{\numberline {7}Approaches not pursued or abandoned}{12}{section.7}\protected@file@percent }
-\newlabel{sec:abandoned}{{7}{12}{Approaches not pursued or abandoned}{section.7}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.1}ResNet finetuning on raw images}{12}{subsection.7.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.2}LightGBM on combined features}{12}{subsection.7.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {8}Conclusion}{12}{section.8}\protected@file@percent }
-\newlabel{sec:conclusion}{{8}{12}{Conclusion}{section.8}{}}
-\gdef \@abspage@last{13}
+\gdef \@abspage@last{23}

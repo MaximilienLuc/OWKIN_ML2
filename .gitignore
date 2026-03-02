@@ -10,3 +10,5 @@ __pycache__/
 *.pyc
 *.pkl
 *.h5
+.DS_Store
+.Rproj.user
